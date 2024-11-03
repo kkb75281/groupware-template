@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="service.js"></script>
+
+<div id="_el_app"></div>
+<script>
+    // import nav.html and add it to the body
+    insertComponent('component/nav.html', _el_app);
+</script>
+
+<script>
+    // 과거 인비테이션 기록, 나중에 다시 초청하기 또는 초청 취소 하는 기능이 있는 리스트를 만들떄 필요
+    skapi.getRecords({
+        table: {
+            name: 'invitations', // 관리자가 직원의 초청기록 등록할 때 사용하는 테이블
+            access_group: 99,
+        }
+    }).then(response => console.log('과거인비테이션', response.list));
+
+</script>
+
+<h1>직원등록</h1>
+
+<p>
+    직원을 등록하면 초대 이메일이 발송됩니다.
+</p>
+
+<br>
+
+<form id="profPic">
+    <label style="display:inline-block">
+        <img src="" id='_el_profile_img' alt="profile image">
+        <style>
+            #_el_profile_img {
+                width: 100px;
+                height: 100px;
+                display: block;
+                object-fit: cover;
+                position: relative;
+                background-color: #f0f0f0;
+            }
+
+            #_el_profile_img::before {
+                content: "No Image";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                background-color: #f0f0f0;
+                color: #888;
+                font-size: 14px;
+                text-align: center;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+        </style>
+        Picture<br>
+        <input type="file" name="init_profile_pic" id="_el_file_input" onchange="
+            // 파일이 선택되면 이미지를 보여준다.
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('_el_profile_img').src = e.target.result;
+            }
+            reader.readAsDataURL(_el_file_input.files[0]);
+        ">
+    </label>
+</form>
+
+<br>
+<br>
+
+<form id="_el_emp_form" onsubmit="
+        event.preventDefault();
+        // 입력창을 비활성화한다.
+        document.querySelectorAll('form input').forEach(el => el.disabled = true);
+
+        async function post() {
+            // 사용자를 등록(초대)한다. try catch는 아래와는 달리 작게 만들도록 한다.
+            try {
+                let email_tag = document.querySelector('input[name=email]').value.replaceAll('.', '_').replace('+', '_').replace('@','_'); // 테크는 특수 문자를 사용할 수 없다.
+                if(_el_file_input.files.length > 0) {
+                    let invHisParams = {
+                        table: {
+                            name: 'invitations', // 관리자가 직원의 초청기록 등록할 때 사용하는 테이블
+                            access_group: 99,
+                        },
+                        tag: email_tag
+                    };
+
+                    // 과거 초청기록 확인
+                    let prevInvitation = await skapi.getRecords(invHisParams);
+                    if(prevInvitation.list.length > 0) {
+                        invHisParams.record_id = prevInvitation.list[0].record_id;
+                    }
+
+                    // 초정기록을 데이터베이스에 업로드/업데이트
+                    let invHistory = await skapi.postRecord(event, invHisParams);
+
+
+                    // 사진을 데이터베이스에 업로드하고 보안키를 제외한 이미지 url주소를 userprofile의 picture에 넣어준다.
+
+                    let initPicParams = {
+                        table: {
+                            name: 'init_profile_pic', // 관리자가 올리는 초기 프로필 사진을 저장하는 테이블
+                            access_group: 1
+                        },
+                    };
+
+                    // 과거 사진 확인
+                    let prevPic = await skapi.getRecords(Object.assign({tag: email_tag}, initPicParams));
+
+                    if(prevPic.list.length > 0) {
+                        // 업데이트
+                        initPicParams.record_id = prevPic.list[0].record_id;
+                        initPicParams.remove_bin = null; // 이전 사진 삭제
+                    }
+
+                    initPicParams.tags = [email_tag];
+
+                    let userInitProfilePic = await skapi.postRecord(document.getElementById('profPic'), initPicParams);
+                    _el_picture_input.value = userInitProfilePic.bin.init_profile_pic[0].url.split('?')[0];
+                }
+
+                let added = await skapi.inviteUser(event);
+                // added = SUCCESS: Invitation has been sent. (User ID: 41d92250-bc3a-45c9-a399-1985a41d762f)
+                // extract user id
+                let user_id = added.split(' ').pop().slice(0, -1).replaceAll('-', '_'); // tag는 특수문자를 사용할 수 없다. (_ 는 사용할수있다)
+
+
+                // 직원의 부서(회사)를 등록한다. user_id는 불편하니까 tag로 사용한다.
+
+                console.log('user_id', user_id);
+                // 과거 기록 확인
+                let previous_emp = await skapi.getRecords({
+                    table: {
+                        name: 'emp_division',
+                        access_group: 1
+                    },
+                    tag: user_id
+                });
+                
+                let emp_pos = {
+                    table: {
+                        name: 'emp_division',
+                        access_group: 1
+                    },
+                    reference: document.querySelector('select[name=division]').value, // 부서(회사) record_id. 레퍼런스 해놓으면 referenced_count 에서 몇명이 속해있는지 알 수 있다. https://docs.skapi.com/api-reference/data-types/README.html#recorddata
+                    tags: [user_id],
+                }
+                if(previous_emp.list.length > 0) {
+                    // 업데이트
+                    emp_pos.record_id = previous_emp.list[0].record_id;
+                }
+
+                await skapi.postRecord(
+                    {
+                        position: _el_position.value // 직책(직급)
+                    },
+                    emp_pos
+                );
+
+                window.alert('등록완료');
+            }
+            catch (error) {
+                window.alert(error.message);
+                document.querySelectorAll('form input').forEach(el => el.disabled = false);
+
+                throw error;
+            }
+
+            window.location.href = 'admin.html'; // main.html로 이동
+        }
+        post();
+">
+    <select name='division' required disabled>
+        <option selected>부서(회사) 선택</option>
+        <script>
+            let divisions = skapi.getRecords({
+                table: {
+                    name: 'divisions',
+                    access_group: 99
+                }
+            },
+            ).then(response => response.list);
+
+            divisions.then(divisions => {
+                divisions.forEach(division => {
+                    const option = document.createElement('option');
+                    option.value = division.record_id;
+                    option.innerText = division.data.division_name;
+                    document.querySelector('select').appendChild(option);
+                });
+                document.querySelector('select').disabled = false;
+            });
+        </script>
+    </select>
+
+    <br>
+    <br>
+
+    <input type="text" name="picture" id='_el_picture_input' hidden>
+    <label>
+        이름<br>
+        <input type="text" name="name" required>
+    </label>
+    <br>
+    <br>
+    <label>
+        이메일<br>
+        <input type="email" name="email" required>
+    </label>
+    <br>
+    <br>
+    <label>
+        생년월일<br>
+        <input type="date" name="birthdate">
+    </label>
+    <br>
+    <br>
+    <label>
+        전화번호<br>
+        <input type="tel" name="phone_number">
+    </label>
+    <br>
+    <br>
+    <label>
+        주소<br>
+        <input type="text" name="address">
+    </label>
+    <br>
+    <br>
+
+    <select required name="access_group" required>
+        <option disabled selected>권한선택</option>
+        <option value="1">직원</option>
+        <option value="98">관리자</option>
+        <option value="99">마스터</option>
+    </select>
+
+    <br>
+    <br>
+
+    <label>
+        직책(직급)<br>
+        <input type="text" name='position' id="_el_position" required>
+    </label>
+
+    <br>
+    <br>
+
+    <button type="submit">등록</button>
+    <a href="admin.html">취소</a>
+</form>

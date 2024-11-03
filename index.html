@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="service.js"></script>
+
+<h1>Login</h1>
+<form action="main.html" onsubmit="skapi.login(event)">
+    <label>
+        Login Email<br>
+        <input type="email" name="email" placeholder="login@email.com" required>
+    </label>
+    <br>
+    <br>
+    <label>
+        Password<br>
+        <input type="password" name="password" placeholder="Enter password" required>
+    </label>
+    <br>
+    <br>
+    <button type="submit">Login</button>
+</form>
+
+<br>
+
+<label>
+    Remember me
+    <input id='input_autoLogin' type="checkbox" onchange="window.localStorage.setItem('autoLogin', this.checked.toString())">
+</label>
+
+<br>
+<br>
+
+<a href="forgot_password.html">Forgot Password?</a>
+
+<br>
+<br>
+
+<small id="_el_ip_info"></small>
+
+<script>
+    // 자동 로그인 설정
+    input_autoLogin.checked = autoLogin;
+
+    // 콜백 여러번 등록 가능
+    skapi.onLogin = (user) => {
+        // 이 패이지에 있을 때만 main으로 이동
+        if(window.location.pathname === '/index.html') {
+            window.location.href = 'main.html';
+        }
+    }
+</script>

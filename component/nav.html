@@ -1,0 +1,19 @@
+<nav>
+    <style>
+        nav {
+            background-color: aliceblue;
+            text-align: right;
+        }
+    </style>
+    <a href="main.html">Home</a>
+    <a id='_el_admin_page' href="admin.html" hidden>Admin</a> <!-- 어드민 계정이면 보여집니다 -->
+    <a href="profile.html">Profile</a>
+    <a href='#' onclick="skapi.logout()">Logout</a>
+</nav>
+
+<script>
+    // 어드민 계정이면 어드민 페이지 링크를 보여줍니다
+    if(_user.access_group === 99) {
+        _el_admin_page.hidden = false;
+    }
+</script>

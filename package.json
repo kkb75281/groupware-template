@@ -1,0 +1,15 @@
+{
+  "name": "groupware-template",
+  "version": "1.0.0",
+  "description": "Simple Groupware SaaS template with Skapi",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx bns 3300",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "basic-node-server": "^1.0.9"
+  }
+}

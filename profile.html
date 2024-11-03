@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="service.js"></script>
+
+<div id="_el_app"></div>
+
+<script>
+    // import nav.html and add it to the body
+    insertComponent('component/nav.html', _el_app);
+</script>
+
+<script>
+    // 입력창을 비활성화한다.
+    document.querySelectorAll('form input').forEach(el => el.disabled = true);
+
+    let profile_pic_postParams = {
+        table: {
+            name: 'profile_picture',
+            access_group: 'authorized',
+        },
+    };
+
+    let previous_profile_pic = [];
+
+    async function main() {
+        // 프로필 정보를 가져와서 입력창에 넣어준다.
+        let profile = await skapi.getProfile();
+
+        document.querySelector('[name=name]').value = profile.name || "";
+        document.querySelector('[name=email]').value = profile.email || "";
+        document.querySelector('[name=birthdate]').value = profile.birthdate || "";
+        document.querySelector('[name=phone_number]').value = profile.phone_number || "";
+        document.querySelector('[name=address]').value = profile.address || "";
+        document.querySelector('[name=picture]').value = profile.picture || "";
+
+        // 프로필 사진이 있으면...
+        if(profile.picture) {
+            // 프로필 사진 이미지를 보여준다. 보안키가 필요한 url 이니 skapi.getFile을 사용한다.
+            document.getElementById('_el_profile_img').src = await skapi.getFile(profile.picture, {
+                dataType: 'endpoint'
+            });
+
+            // 사용자가 올린 프로필 사진 레코드를 가져온다.
+            let profile_pic_rec = await skapi.getRecords({
+                table: {
+                    name: 'profile_picture',
+                    access_group: 'authorized'
+                },
+                reference: _user.user_id
+            });
+
+            // 프로필 사진 레코드가 있으면... (없는 경우는 사용자가 프로필 사진을 업로드한적이 없는 경우)
+            if (profile_pic_rec.list?.[0]) {
+                // 프로필 사진 레코드 업로드 파라미터에 record_id를 넣어준다 (업데이트가 되도록)
+                profile_pic_postParams.record_id = profile_pic_rec.list?.[0].record_id;
+
+                if(profile_pic_rec.list?.[0].bin?.profile_pic?.[0]?.url) {
+                    // 이전 프로필 사진을 변수에 저장해둔다.
+                    previous_profile_pic = profile_pic_rec.list?.[0].bin.profile_pic;
+                }
+            }
+        }
+
+        // 프로필 정보를 가져왔으므로 입력창을 활성화한다.
+        document.querySelectorAll('form input').forEach(el => el.disabled = false);
+
+
+        let access_group = {
+            1: '직원',
+            98: '관리자',
+            99: '마스터'
+        };
+
+        let division = await skapi.getRecords({
+            table: {
+                name: 'emp_division',
+                access_group: 'authorized'
+            },
+            tag: profile.user_id.replaceAll('-', '_')
+        });
+
+        document.getElementById('position').innerText = '직책' + division.list[0].data.position + ', 권한:' + access_group[profile.access_group];
+    }
+    
+    main();
+</script>
+
+<h1>Profile</h1>
+
+<form id='_el_pictureForm'>
+    <label style='display:inline-block'>
+        <img id='_el_profile_img' alt="profile image">
+        <style>
+            #_el_profile_img {
+                width: 100px;
+                height: 100px;
+                display: block;
+                object-fit: contain;
+                position: relative;
+            }
+            #_el_profile_img::before {
+                content: "No Image";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                background-color: #f0f0f0;
+                color: #888;
+                font-size: 14px;
+                text-align: center;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+
+            #_el_profile_img[src]::before {
+                content: "";
+            }
+        </style>
+
+        Picture<br>
+        <input type="file" name="profile_pic" id="_el_file_input" onchange="
+            // 파일이 선택되면 이미지를 보여준다.
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('_el_profile_img').src = e.target.result;
+            }
+            reader.readAsDataURL(_el_file_input.files[0]);
+        ">
+    </label>
+</form>
+
+<br>
+
+<form onsubmit="
+        event.preventDefault();
+        // 입력창을 비활성화한다.
+        document.querySelectorAll('form input').forEach(el => el.disabled = true);
+
+        async function post() {
+            if(_el_file_input.files.length > 0) {
+                // 새로 선택한 사진이 있을시 레코드에서 이전 사진을 삭제하는 파라미터를 추가한다.
+                profile_pic_postParams.remove_bin = previous_profile_pic;
+                
+                // 새 이미지를 레코드에 업로드하고 보안키를 제외한 이미지 주소를 userprofile의 picture에 넣어준다.
+                let picRec = await skapi.postRecord(_el_pictureForm, profile_pic_postParams);
+                _el_picture_input.value = picRec.bin.profile_pic.at(-1).url.split('?')[0];
+            }
+
+            // 프로필 정보를 업데이트한다.
+            await skapi.updateProfile(event);
+            window.alert('Profile has been updated');
+            window.location.href = 'main.html'; // main.html로 이동
+        }
+        post();
+">
+    <input type="text" name="picture" id='_el_picture_input' hidden>
+    <p id="position"></p>
+    <label>
+        Name<br>
+        <input type="text" name="name" placeholder="Enter name" required>
+    </label>
+    <br>
+    <br>
+    <label>
+        Email<br>
+        <input type="email" name="email" placeholder="Enter email" required>
+    </label>
+    <br>
+    <br>
+    <!-- <input type="checkbox" name="email_public" checked hidden> -->
+    <!-- <input type="checkbox" name="phone_number_public" checked hidden> -->
+    <input type="checkbox" name="address_public" checked hidden>
+    <input type="checkbox" name="gender_public" checked hidden>
+    <input type="checkbox" name="birthdate_public" checked hidden>
+    <label>
+        Birth Date<br>
+        <input type="date" name="birthdate" required>
+    </label>
+    <br>
+    <br>
+    <label>
+        Phone Number<br>
+        <input type="tel" name="phone_number" placeholder="+82123456789" required>
+    </label>
+    <br>
+    <br>
+    <label>
+        Address<br>
+        <input type="text" name="address" placeholder="Enter address" required>
+    </label>
+    <br>
+    <br>
+    <button type="submit">Update</button>
+    <a href="main.html">Cancel</a>
+</form>

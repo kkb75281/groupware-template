@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="service.js"></script>
+
+<div id="_el_app"></div>
+<script>
+    // import nav.html and add it to the body
+    insertComponent('component/nav.html', _el_app);
+</script>
+
+<h1>부서(회사) 등록</h1>
+
+<form action="admin.html" onsubmit="
+    // 입력창을 비활성화한다.
+    document.querySelectorAll('form input').forEach(el => el.disabled = true);
+
+    skapi.postRecord(event, {
+        table: {
+            name: 'divisions',
+            access_group: 99
+        }
+    }).then(() => {
+        window.alert('등록되었습니다.');
+    });
+">
+
+    <label style="display:inline-block;">
+        <img src="" id="_el_logo_img" alt="Company Logo">
+        <style>
+            #_el_logo_img {
+                width: 100px;
+                height: 100px;
+                display: block;
+                object-fit: contain;
+                position: relative;
+            }
+
+            #_el_logo_img::before {
+                content: "로고";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                background-color: #f0f0f0;
+                color: #888;
+                font-size: 14px;
+                text-align: center;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+        </style>
+        <br>
+        부서(회사) 로고<br>
+        <input type="file" name="division_logo" onchange="
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('_el_logo_img').src = e.target.result;
+            }
+            reader.readAsDataURL(this.files[0]);
+    ">
+    </label>
+
+    <br>
+    <br>
+
+    <label>
+        부서(회사)명<br>
+        <input type="text" name="division_name" required>
+    </label>
+    <br>
+    <br>
+    <label>
+        부서(회사) 설명<br>
+        <input type="text" name="division_description">
+    </label>
+    <br>
+    <br>
+    <label>
+        대표자명<br>
+        <input type="text" name="division_ceo_name">
+    </label>
+    <br>
+    <br>
+    <label>
+        부서(회사) 주소<br>
+        <input type="text" name="division_address">
+    </label>
+    <br>
+    <br>
+    <label>
+        사업자번호<br>
+        <input type="text" name="division_business_code">
+    </label>
+    <br>
+    <br>
+    <label>
+        법인번호<br>
+        <input type="text" name="division_corporate_number">
+    </label>
+    <br>
+    <br>
+    <label>
+        업태<br>
+        <input type="text" name="division_business_type">
+    </label>
+    <br>
+    <br>
+    <label>
+        종목<br>
+        <input type="text" name="division_business_item">
+    </label>
+    <br>
+    <br>
+    <label>
+        부서(회사) 설립일<br>
+        <input type="date" name="division_establishment_date">
+    </label>
+    <br>
+    <br>
+    <label>
+        부서(회사) 전화번호<br>
+        <input type="text" name="division_phone_number">
+    </label>
+    <br>
+    <br>
+    <label>
+        부서(회사) 이메일<br>
+        <input type="email" name="division_email">
+    </label>
+    <br>
+    <br>
+    <label>
+        부서(회사) 팩스번호<br>
+        <input type="text" name="division_fax">
+    </label>
+    <br>
+    <br>
+    <label>
+        부서(회사) 홈페이지<br>
+        <input type="url" name="division_homepage">
+    </label>
+    <br>
+    <br>
+
+    <!-- <label style="display:inline-block;"> 법인인감은 그룹웨어에서 사용하지 않음
+        <img src="" id="_el_seal_img" alt="Company Seal">
+        <style>
+            #_el_seal_img {
+                width: 50px;
+                height: 50px;
+                display: block;
+                object-fit: contain;
+                position: relative;
+            }
+
+            #_el_seal_img::before {
+                content: "법인인감";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                background-color: #f0f0f0;
+                color: #888;
+                font-size: 14px;
+                text-align: center;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+        </style>
+        부서(회사) 법인인감<br>
+        <input type="file" name="division_seal" onchange="
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('_el_seal_img').src = e.target.result;
+            }
+            reader.readAsDataURL(this.files[0]);
+        ">
+    </label>
+    <br>
+    <br> -->
+    <label style="display:inline-block;">
+        <img src="" id="_el_used_seal_img" alt="Company Used Seal">
+        <style>
+            #_el_used_seal_img {
+                width: 50px;
+                height: 50px;
+                display: block;
+                object-fit: contain;
+                position: relative;
+            }
+
+            #_el_used_seal_img::before {
+                content: "사용인감";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                background-color: #f0f0f0;
+                color: #888;
+                font-size: 14px;
+                text-align: center;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+        </style>
+        부서(회사) 사용인감<br>
+        <input type="file" name="division_used_seal" onchange="
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('_el_used_seal_img').src = e.target.result;
+            }
+            reader.readAsDataURL(this.files[0]);
+        ">
+    </label>
+    <br>
+    <br>
+    <label style="display:inline-block;">
+        <img src="" id="_el_official_seal_img" alt="Company Official Seal">
+        <style>
+            #_el_official_seal_img {
+                width: 50px;
+                height: 50px;
+                display: block;
+                object-fit: contain;
+                position: relative;
+            }
+
+            #_el_official_seal_img::before {
+                content: "회사직인";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                background-color: #f0f0f0;
+                color: #888;
+                font-size: 14px;
+                text-align: center;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+        </style>
+        부서(회사) 회사직인<br>
+        <input type="file" name="division_official_seal" onchange="
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('_el_official_seal_img').src = e.target.result;
+            }
+            reader.readAsDataURL(this.files[0]);
+        ">
+    </label>
+
+    <br>
+    <br>
+
+    <button type="submit">등록</button>
+    <a href="admin.html">취소</a>
+</form>
