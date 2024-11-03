@@ -176,7 +176,8 @@
         post();
 ">
     <select name='division' required disabled>
-        <option selected>부서(회사) 선택</option>
+        <!-- 이것은 꼭 필수선택하도록 만들어야 합니다!!!!!!!!!-->
+        <option disabled selected>부서(회사) 선택</option>
         <script>
             let divisions = skapi.getRecords({
                 table: {
@@ -234,6 +235,7 @@
     <br>
 
     <select required name="access_group" required>
+        <!-- 이것은 꼭 필수선택하도록 만들어야 합니다!!!!!!!!!-->
         <option disabled selected>권한선택</option>
         <option value="1">직원</option>
         <option value="98">관리자</option>
