@@ -9,17 +9,6 @@
     insertComponent('component/nav.html', _el_app);
 </script>
 
-<script>
-    // 과거 인비테이션 기록, 나중에 다시 초청하기 또는 초청 취소 하는 기능이 있는 리스트를 만들떄 필요
-    skapi.getRecords({
-        table: {
-            name: 'invitations', // 관리자가 직원의 초청기록 등록할 때 사용하는 테이블
-            access_group: 99,
-        }
-    }).then(response => console.log('과거인비테이션', response.list));
-
-</script>
-
 <h1>직원등록</h1>
 
 <p>
@@ -82,24 +71,6 @@
             try {
                 let email_tag = document.querySelector('input[name=email]').value.replaceAll('.', '_').replace('+', '_').replace('@','_'); // 테크는 특수 문자를 사용할 수 없다.
                 if(_el_file_input.files.length > 0) {
-                    let invHisParams = {
-                        table: {
-                            name: 'invitations', // 관리자가 직원의 초청기록 등록할 때 사용하는 테이블
-                            access_group: 99,
-                        },
-                        tag: email_tag
-                    };
-
-                    // 과거 초청기록 확인
-                    let prevInvitation = await skapi.getRecords(invHisParams);
-                    if(prevInvitation.list.length > 0) {
-                        invHisParams.record_id = prevInvitation.list[0].record_id;
-                    }
-
-                    // 초정기록을 데이터베이스에 업로드/업데이트
-                    let invHistory = await skapi.postRecord(event, invHisParams);
-
-
                     // 사진을 데이터베이스에 업로드하고 보안키를 제외한 이미지 url주소를 userprofile의 picture에 넣어준다.
 
                     let initPicParams = {
@@ -130,7 +101,7 @@
                 let user_id = added.split(' ').pop().slice(0, -1).replaceAll('-', '_'); // tag는 특수문자를 사용할 수 없다. (_ 는 사용할수있다)
 
 
-                // 직원의 부서(회사)를 등록한다. user_id는 불편하니까 tag로 사용한다.
+                // 직원의 부서(회사)를 등록한다. user_id는 tag로 사용한다.
 
                 console.log('user_id', user_id);
                 // 과거 기록 확인
@@ -256,3 +227,35 @@
     <button type="submit">등록</button>
     <a href="admin.html">취소</a>
 </form>
+
+<hr>
+
+<h1>과거 인비테이션</h1>
+
+<ul id="_el_prevInv">
+
+</ul>
+<script>
+
+    // 과거 인비테이션을 가져온다.
+    function getInvitations() {
+        _el_prevInv.innerHTML = '';
+
+        skapi.getInvitations().then(response => {
+            console.log('과거인비테이션', response.list);
+
+            response.list.forEach(inv => {
+                const li = document.createElement('li');
+                li.innerHTML = /*html*/ `
+                    <p>이메일: ${inv.email} 권한: ${inv.access_group} 이름: ${inv.name}</p>
+                    <button onclick="skapi.resendInvitation({email: '${inv.email}' }).then(m=>alert(m))">재전송</button>
+                    <button onclick="skapi.cancelInvitation({email: '${inv.email}' }).then(m=>{alert(m); getInvitations()})">초청취소</button>
+                `
+                _el_prevInv.appendChild(li);
+            });
+        });
+    }
+
+    getInvitations();
+
+</script>

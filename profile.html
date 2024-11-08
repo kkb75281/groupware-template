@@ -80,7 +80,7 @@
             tag: profile.user_id.replaceAll('-', '_')
         });
 
-        document.getElementById('position').innerText = '직책' + division.list[0].data.position + ', 권한:' + access_group[profile.access_group];
+        document.getElementById('position').innerText = '직책' + (division.list?.[0]?.data?.position || 'Unknown') + ', 권한:' + access_group[profile.access_group];
     }
     
     main();
