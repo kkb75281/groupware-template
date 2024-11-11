@@ -135,11 +135,6 @@
                 if (fileInfo.uploader === profile.user_id) {
                     // 프로필 사진 레코드 업로드 파라미터에 record_id를 넣어준다 (업데이트가 되도록)
                     profile_pic_postParams.record_id = fileInfo.record_id;
-
-                    if(profile_pic_rec.list?.[0].bin?.profile_pic?.[0]?.url) {
-                        // 이전 프로필 사진은 다 지우도록 한다 (새로 업로드 해야하니)
-                        profile_pic_postParams.remove_bin = null;
-                    }
                 }
 
                 let picRec = await skapi.postRecord(_el_pictureForm, profile_pic_postParams);
