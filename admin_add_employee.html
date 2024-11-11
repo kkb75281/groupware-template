@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <div id="_el_app"></div>
@@ -81,7 +81,7 @@
                     };
 
                     let userInitProfilePic = await skapi.postRecord(document.getElementById('profPic'), initPicParams);
-
+                    
                     // 프로필에는 보안 키를 제외한 url만 저장한다.
                     _el_picture_input.value = userInitProfilePic.bin.init_profile_pic[0].url.split('?')[0];
                 }
