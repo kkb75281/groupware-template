@@ -1,8 +1,8 @@
 let _ip = "";
 let _user = null;
 const autoLogin = window.localStorage.getItem("autoLogin") === 'true';
-const SERVICE_ID = "ap214UHTHgvr8ZLYxckv";
-const OWNER_ID = "4d4a36a5-b318-4093-92ae-7cf11feae989";
+const SERVICE_ID = "ap21T8Lzjos5N7L3CmGr";
+const OWNER_ID = "5750ee2c-f7f7-43ff-b6a5-cce599d30101";
 const _bleedingEdge = { "hostDomain": "skapi.app", "target_cdn": "d1wrj5ymxrt2ir", "network_logs": true }; // 테스트 망에서의 옵션
 
 const skapi = new Skapi(SERVICE_ID, OWNER_ID, { autoLogin }, _bleedingEdge);
