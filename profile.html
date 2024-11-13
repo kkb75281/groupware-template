@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <div id="_el_app"></div>
@@ -21,11 +21,11 @@
         },
     };
 
-    let previous_profile_pic = [];
+    let profile;
 
     async function main() {
         // 프로필 정보를 가져와서 입력창에 넣어준다.
-        let profile = await skapi.getProfile();
+        profile = await skapi.getProfile();
 
         document.querySelector('[name=name]').value = profile.name || "";
         document.querySelector('[name=email]').value = profile.email || "";
@@ -40,26 +40,6 @@
             document.getElementById('_el_profile_img').src = await skapi.getFile(profile.picture, {
                 dataType: 'endpoint'
             });
-
-            // 사용자가 올린 프로필 사진 레코드를 가져온다.
-            let profile_pic_rec = await skapi.getRecords({
-                table: {
-                    name: 'profile_picture',
-                    access_group: 'authorized'
-                },
-                reference: _user.user_id
-            });
-
-            // 프로필 사진 레코드가 있으면... (없는 경우는 사용자가 프로필 사진을 업로드한적이 없는 경우)
-            if (profile_pic_rec.list?.[0]) {
-                // 프로필 사진 레코드 업로드 파라미터에 record_id를 넣어준다 (업데이트가 되도록)
-                profile_pic_postParams.record_id = profile_pic_rec.list?.[0].record_id;
-
-                if(profile_pic_rec.list?.[0].bin?.profile_pic?.[0]?.url) {
-                    // 이전 프로필 사진을 변수에 저장해둔다.
-                    previous_profile_pic = profile_pic_rec.list?.[0].bin.profile_pic;
-                }
-            }
         }
 
         // 프로필 정보를 가져왔으므로 입력창을 활성화한다.
@@ -80,7 +60,7 @@
             tag: profile.user_id.replaceAll('-', '_')
         });
 
-        document.getElementById('position').innerText = '직책' + division.list[0].data.position + ', 권한:' + access_group[profile.access_group];
+        document.getElementById('position').innerText = '직책' + (division.list?.[0]?.data?.position || 'Unknown') + ', 권한:' + access_group[profile.access_group];
     }
     
     main();
@@ -142,9 +122,21 @@
         async function post() {
             if(_el_file_input.files.length > 0) {
                 // 새로 선택한 사진이 있을시 레코드에서 이전 사진을 삭제하는 파라미터를 추가한다.
-                profile_pic_postParams.remove_bin = previous_profile_pic;
+                profile_pic_postParams.remove_bin = null;
                 
                 // 새 이미지를 레코드에 업로드하고 보안키를 제외한 이미지 주소를 userprofile의 picture에 넣어준다.
+                
+                // 파일 정보 불러온다
+                let fileInfo = await skapi.getFile(profile.picture, {
+                    dataType: 'info'
+                });
+
+                // 프로필 사진을 사용자가 직접 올린것이라면... (아닌 경우는 사용자가 프로필 사진을 업로드한적이 없는 경우)
+                if (fileInfo.uploader === profile.user_id) {
+                    // 프로필 사진 레코드 업로드 파라미터에 record_id를 넣어준다 (업데이트가 되도록)
+                    profile_pic_postParams.record_id = fileInfo.record_id;
+                }
+
                 let picRec = await skapi.postRecord(_el_pictureForm, profile_pic_postParams);
                 _el_picture_input.value = picRec.bin.profile_pic.at(-1).url.split('?')[0];
             }
