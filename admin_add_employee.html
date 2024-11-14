@@ -331,11 +331,23 @@
             }
         }
 
+        let ref_info = {
+            table: {
+                name: 'ref_ids',
+                access_group: 1
+            },
+            index: {
+                name: 'user_id',
+                value: safeUserId
+            },
+        }
 
         skapi.cancelInvitation(inv).then(() => {
+            // 이제 record_id 몰라도 query로 레코드 삭제 가능
             skapi.deleteRecords(picTable);
             skapi.deleteRecords(positionTable);
             skapi.deleteRecords(privateStorage);
+            skapi.deleteRecords(ref_info);
             getInvitations();
         });
     }
