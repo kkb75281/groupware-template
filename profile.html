@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <div id="_el_app"></div>
@@ -94,10 +94,20 @@
                 },
                 reference: private_storage_ref_id, // 자료방 레코드 id
             });
-            console.log({private_data});
             
             // 가져온 자료를 보여준다.
             priv_data.innerText = JSON.stringify(private_data.list, null, 2);
+
+            // 직원이 추가로 자료를 올리고 싶다면 private 으로 올리면 된다. 이렇게 하면 reference record 주인(마스터) 와 직원 둘다 자료를 볼 수 있다.
+            /*
+                skapi.postRecord(자료, {
+                    table: {
+                        name: 'emp_additional_data',
+                        access_group: 'private'
+                    },
+                    reference: private_storage_ref_id
+                });
+            */
         }
 
         // 프로필 정보를 가져왔으므로 입력창을 활성화한다.
