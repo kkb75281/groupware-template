@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <div id="_el_app"></div>
@@ -313,7 +313,6 @@
 <script>
     // fill the form with record data
     if (record?.data) {
-        console.log('get');
         document.querySelectorAll('form input').forEach(el => {
             console.log({ el })
             if (el.name in record.data) {

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <div id="_el_app"></div>
@@ -16,6 +16,7 @@
     #divisions_list>a>* {
         vertical-align: middle;
     }
+
     .division-logo {
         width: 2rem;
         height: 2rem;
@@ -44,7 +45,7 @@
                     <span>${division.data.division_name}</span>
                 `;
 
-                li.appendChild(a);
+            li.appendChild(a);
             container.appendChild(li);
         });
     }
