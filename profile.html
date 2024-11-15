@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <div id="_el_app"></div>
@@ -35,34 +35,85 @@
         document.querySelector('[name=picture]').value = profile.picture || "";
 
         // 프로필 사진이 있으면...
-        if(profile.picture) {
+        if (profile.picture) {
             // 프로필 사진 이미지를 보여준다. 보안키가 필요한 url 이니 skapi.getFile을 사용한다.
             document.getElementById('_el_profile_img').src = await skapi.getFile(profile.picture, {
                 dataType: 'endpoint'
             });
         }
 
-        // 프로필 정보를 가져왔으므로 입력창을 활성화한다.
-        document.querySelectorAll('form input').forEach(el => el.disabled = false);
+        let user_id_for_params = profile.user_id.replaceAll('-', '_');
 
+        // 직책을 가져온다
+        let division = await skapi.getRecords({
+            table: {
+                name: 'emp_division',
+                access_group: 'authorized'
+            },
+            index: {
+                name: 'user_id',
+                value: user_id_for_params
+            },
+        });
 
         let access_group = {
             1: '직원',
             98: '관리자',
             99: '마스터'
         };
-
-        let division = await skapi.getRecords({
-            table: {
-                name: 'emp_division',
-                access_group: 'authorized'
-            },
-            tag: profile.user_id.replaceAll('-', '_')
-        });
-
         document.getElementById('position').innerText = '직책' + (division.list?.[0]?.data?.position || 'Unknown') + ', 권한:' + access_group[profile.access_group];
+
+        // 자료방 record_id는 profile.misc에 저장되어있다.
+        private_storage_ref_id = profile.misc ? JSON.parse(profile.misc).private_storage_ref_id : null;
+        
+        if(!private_storage_ref_id) {
+            // 아직 저장이 안되어있다면 자료방 record_id를 가져온다
+            private_storage_ref_id = (await skapi.getRecords({
+                table: {
+                    name: 'ref_ids',
+                    access_group: 1
+                },
+                index: {
+                    name: 'user_id',
+                    value: user_id_for_params
+                }
+            })).list?.[0]?.data.privateStorageReference;
+
+            if(private_storage_ref_id) {
+                // 자료방 record_id를 json string으로 misc 에 저장한다.
+                await skapi.updateProfile({misc: JSON.stringify({private_storage_ref_id})});
+            }
+        }
+
+        if(private_storage_ref_id) {
+            // 자료방 record_id가 있으면 자료방 record_id로 reference되어있는 모든 record를 가져온다.
+            let private_data = await skapi.getRecords({
+                table: {
+                    name: 'emp_additional_data',
+                    access_group: 99
+                },
+                reference: private_storage_ref_id, // 자료방 레코드 id
+            });
+            
+            // 가져온 자료를 보여준다.
+            priv_data.innerText = JSON.stringify(private_data.list, null, 2);
+
+            // 직원이 추가로 자료를 올리고 싶다면 private 으로 올리면 된다. 이렇게 하면 reference record 주인(마스터) 와 직원 둘다 자료를 볼 수 있다.
+            /*
+                skapi.postRecord(자료, {
+                    table: {
+                        name: 'emp_additional_data',
+                        access_group: 'private'
+                    },
+                    reference: private_storage_ref_id
+                });
+            */
+        }
+
+        // 프로필 정보를 가져왔으므로 입력창을 활성화한다.
+        document.querySelectorAll('form input').forEach(el => el.disabled = false);
     }
-    
+
     main();
 </script>
 
@@ -79,6 +130,7 @@
                 object-fit: contain;
                 position: relative;
             }
+
             #_el_profile_img::before {
                 content: "No Image";
                 display: flex;
@@ -188,3 +240,9 @@
     <button type="submit">Update</button>
     <a href="main.html">Cancel</a>
 </form>
+
+<hr>
+
+<h2>Private Data</h2>
+
+<pre id="priv_data"></pre>

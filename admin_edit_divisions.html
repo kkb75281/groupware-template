@@ -313,7 +313,6 @@
 <script>
     // fill the form with record data
     if (record?.data) {
-        console.log('get');
         document.querySelectorAll('form input').forEach(el => {
             console.log({ el })
             if (el.name in record.data) {
