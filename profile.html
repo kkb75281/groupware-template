@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <div id="_el_app"></div>
@@ -242,6 +242,13 @@
 </form>
 
 <hr>
+
+<form onsubmit="skapi.changePassword(event).then(res => window.alert(res))">
+    <input name="current_password" placeholder="Current Password" required><br>
+    <input name="new_password" placeholder="New Password" required><br>
+    <br>
+    <input type="submit" value="Change Password">
+</form>
 
 <h2>Private Data</h2>
 

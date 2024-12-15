@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
 
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <h1>Login</h1>
@@ -41,12 +41,4 @@
 <script>
     // 자동 로그인 설정
     input_autoLogin.checked = autoLogin;
-
-    // 콜백 여러번 등록 가능
-    skapi.onLogin = (user) => {
-        // 이 패이지에 있을 때만 main으로 이동
-        if(window.location.pathname === '/index.html') {
-            window.location.href = 'main.html';
-        }
-    }
 </script>
