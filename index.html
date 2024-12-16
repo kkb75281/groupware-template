@@ -43,10 +43,11 @@
     input_autoLogin.checked = autoLogin;
 
     // 콜백 여러번 등록 가능
-    skapi.onLogin = (user) => {
-        // 이 패이지에 있을 때만 main으로 이동
-        if(window.location.pathname === '/index.html') {
-            window.location.href = 'main.html';
-        }
-    }
+    // skapi.onLogin = (user) => {
+    //     console.log('onLogin', user);
+    //     // 이 패이지에 있을 때만 main으로 이동
+    //     // if(window.location.pathname === '/index.html') {
+    //     //     window.location.href = 'main.html';
+    //     // }
+    // }
 </script>

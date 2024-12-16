@@ -1,7 +1,7 @@
 let _ip = "";
 let _user = null;
 const autoLogin = window.localStorage.getItem("autoLogin") === 'true';
-const SERVICE_ID = "ap21T7fhHOcU2HgaCmGr";
+const SERVICE_ID = "ap21UAo9MdRQtaQ8CmGr";
 const OWNER_ID = "5750ee2c-f7f7-43ff-b6a5-cce599d30101";
 const _bleedingEdge = { "hostDomain": "skapi.app", "target_cdn": "d1wrj5ymxrt2ir", "network_logs": true }; // 테스트 망에서의 옵션
 
@@ -34,7 +34,7 @@ skapi.getConnectionInfo().then((info) => {
 skapi.onLogin = (user)=>{
     _user = user;
     console.log(_user);
-    if(user === null) {
-        window.location = "index.html"; // 로그인 페이지로 이동
-    }
+    // if(user === null) {
+    //     window.location = "index.html"; // 로그인 페이지로 이동
+    // }
 }
