@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/skapi-js@latest/dist/skapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
 <script src="service.js"></script>
 
 <div id="_el_app"></div>
@@ -69,7 +69,6 @@
 
         event.preventDefault();
         // 입력창을 비활성화한다.
-
         
         document.querySelectorAll('form input').forEach(el => el.disabled = true);
 
@@ -128,8 +127,8 @@
                         name: 'user_id',
                         value: user_id_safe
                     },
-                    reference: {
-                        can_remove_reference: true // 마스터가 삭제 해당 레코드 삭제시, reference된 모든 레코드들도 지워지도록 한다.
+                    source: {
+                        can_remove_referencing_records: true // 마스터가 삭제 해당 레코드 삭제시, reference된 모든 레코드들도 지워지도록 한다.
                     }
                 })
 

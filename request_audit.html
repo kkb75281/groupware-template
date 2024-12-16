@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
+<script src="service.js"></script>
+
+<div id="_el_app"></div>
+<script>
+    // import nav.html and add it to the body
+    insertComponent('component/nav.html', _el_app);
+</script>
+
+<h1>결제</h1>
+<form onsubmit="requestAudit(event)">
+    <input type="text" id="to_audit" placeholder="결제 사안" required>
+    <input type="text" placeholder="결제자1, 결제자2, ..." id='inp_auditors' required>
+    <input type="submit" value="결제요청">
+</form>
+<pre id="users"></pre>
+<script>
+    skapi.getUsers().then(response => {
+        document.getElementById('users').innerText = JSON.stringify(response, null, 2);
+    });
+
+    async function requestAudit(event) {
+        event.preventDefault();
+        const form = event.target;
+        let auditors = inp_auditors.value.split(',').map(u => u.trim()); // [ 'user_id1', 'user_id2', ... ]
+
+        // 결제 서류 업로드
+        let audit_doc = await skapi.postRecord(
+            {
+                to_audit: to_audit.value, // 결제 사안 제목
+                auditors, // 결제자 목록
+                // ... 기타 등등 데이터
+            },
+            {
+                readonly: true, // 결제 올리면 수정할수 없음. 수정하려면 새로 올려야 함. 이것은 교묘히 수정할 수 없게 하는 방법
+                table: {
+                    name: 'audit_doc',
+                    access_group: 'private', // 프라빗으로 올려야 결제자만 접근 가능
+                },
+                index: {
+                    name: 'to_audit', // 결제 사안 제목. 제목별로 찾을때 위한 인덱싱
+                    value: to_audit.value,
+                },
+                tags: auditors.map(u => u.replaceAll('-', '_')) // 결제자 태그, 나중에 결제자 별로 찾을 때 사용
+            }
+        );
+
+        let audit_id = audit_doc.record_id; // 결제 요청 서류 record_id
+
+        let sendRequest = [];
+
+        for (let i = 0; i < auditors.length; i++) {
+            sendRequest.push( // 각각 결제자에게 결제 서류 접근 권한 부여
+                skapi.grantPrivateRecordAccess({
+                    record_id: audit_id,
+                    user_id: auditors[i]
+                })
+            );
+
+            sendRequest.push(
+                // 각각 결제자에게 결제 창구 보내기
+                skapi.postRecord(
+                    {
+                        audit_id, // 결제 요청 서류 record_id
+                        auditor: auditors[i], // 결제자
+                    },
+                    {
+                        unique_id: `audit_request:${audit_id}:${auditors[i]}`,
+                        readonly: true,
+                        table: {
+                            name: 'audit_request',
+                            access_group: 'authorized', // 결제 요청 목록은 공개
+                        },
+                        reference: `audit:${auditors[i]}`, // 각 결제자에게게 결제 창구
+                        source: {
+                            prevent_multiple_referencing: true, // 중복 결제 방지
+                            only_granted_can_reference: true, // private access 가진 사람만 결제제 가능
+                        },
+                        tags: [audit_id]
+                    }
+                ).then(res => {
+                    skapi.grantPrivateRecordAccess( // 결제자에게 결제 요청 record에도 접근 권한 부여해야 reference(결제) 가능
+                        {
+                            record_id: res.record_id,
+                            user_id: res.data.auditor
+                        }
+                    );
+
+                    skapi.postRealtime(  // realtime으로 결제 요청 알림
+                        {
+                            audit_request: {
+                                audit_request_id: res.record_id,
+                                auditors
+                            }
+                        },
+                        auditors[i]
+                    );
+
+                    return res;
+                })
+            )
+        }
+
+        await Promise.all(sendRequest);
+
+        alert('결제 요청이 완료되었습니다.');
+    }
+</script>
+
+</html>

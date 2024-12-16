@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/skapi-js@beta/dist/skapi.js"></script>
+<script src="service.js"></script>
+
+<div id="_el_app"></div>
+<script>
+    // import nav.html and add it to the body
+    insertComponent('component/nav.html', _el_app);
+
+    let audit_doc_list = {};
+</script>
+
+<h1>Notification</h1>
+
+<form onsubmit="
+    event.preventDefault();
+    let audit_id = document.getElementById('audit_record_id').value
+    skapi.postRecord(event, {
+        table: {
+            name: 'audit_approval',
+            access_group: 'authorized'
+        },
+        reference: audit_id,
+        tags: [audit_doc_list[audit_id].user_id.replaceAll('-', '_')], // 결제 요청자 id
+    }).then(res => {
+        skapi.postRealtime(  // realtime으로 결제 여부 알림
+            {
+                audit_approval: {
+                    audit_doc_id: audit_id,
+                    approval: res.data.approved
+                }
+            },
+            audit_doc_list[audit_id].user_id
+        );
+
+        window.alert('결제요청이 완료되었습니다.');
+    })
+">
+    <input type="text" id="audit_record_id" placeholder="결제서류id" required>
+
+    <label>
+        결제/반려:
+        <input type="checkbox" name="approved">
+    </label>
+
+    <input type="submit" value="확인">
+</form>
+
+<pre id="audit_requests"></pre>
+
+<script>
+    skapi.onLogin = async user => {
+        if (!user) {
+            return;
+        }
+
+        let audits = await skapi.getRecords( // 내가 결제해야할 결제 요청 가져오기
+            {
+                table: {
+                    name: 'audit_request',
+                    access_group: 'authorized'
+                },
+                reference: `audit:${_user.user_id}`
+            },
+            {
+                ascending: false, // 최신순
+            }
+        );
+
+        for (let a of audits.list) {
+
+            // 결제 서류 가져오기
+            let audit_doc = (await skapi.getRecords({
+                record_id: a.data.audit_id
+            })).list[0];
+
+            audit_doc_list[audit_doc.record_id] = audit_doc; // 결제 서류 저장
+
+            // 다른 사람 결제 여부 확인
+            let approvals = (await skapi.getRecords({
+                table: {
+                    name: 'audit_approval',
+                    access_group: 'authorized'
+                },
+                reference: a.data.audit_id
+            })).list;
+
+            let oa_has_audited_str = '';
+
+            for (let auditor of audit_doc.tags.map(a => a.replaceAll('_', '-'))) { // audit_doc.tags: 결제자 목록
+                let oa_has_audited_str = null;
+                for (let approval of approvals) {
+                    if (approval.user_id === auditor) {
+                        oa_has_audited_str = approval.data.approved ? '결제함' : '반려함';
+                        audit_requests.innerHTML += `---${auditor}:${oa_has_audited_str}---\n`; // 결제 서류 화면에 보여주기
+                        break;
+                    }
+                }
+                if (!oa_has_audited_str) {
+                    audit_requests.innerHTML += `---${auditor}:결제대기중---\n`; // 결제 서류 화면에 보여주기
+                }
+            }
+
+            audit_requests.innerHTML += JSON.stringify(audit_doc, null, 2) + '\n'; // 결제 서류 화면에 보여주기
+        }
+    }
+</script>
+
+</html>

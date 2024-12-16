@@ -8,12 +8,18 @@
     <a href="main.html">Home</a>
     <a id='_el_admin_page' href="admin.html" hidden>Admin</a> <!-- 어드민 계정이면 보여집니다 -->
     <a href="profile.html">Profile</a>
+    <a href="request_audit.html">Request Audit</a>
+    <a href="notification_list.html">(<span id="notification_count">0</span>)Notification</a>
     <a href='#' onclick="skapi.logout()">Logout</a>
 </nav>
 
 <script>
-    // 어드민 계정이면 어드민 페이지 링크를 보여줍니다
-    if(_user.access_group === 99) {
-        _el_admin_page.hidden = false;
+    if (_user) {
+        // 어드민 계정이면 어드민 페이지 링크를 보여줍니다
+        if (_user.access_group === 99) {
+            _el_admin_page.hidden = false;
+        }
+
+        notification_count.innerText = window.sessionStorage.getItem(`notification_count:${_user.user_id}`) || '0'; // notification count 가져오기
     }
 </script>
